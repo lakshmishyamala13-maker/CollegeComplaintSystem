@@ -29,15 +29,16 @@ app.get("/admin.html", requireAdmin, (req, res) => {
 app.use(express.static(__dirname));
 console.log("Serving files from:", __dirname);
 // Connect to MySQL
-
-   const db = mysql.createConnection({
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "root",
+const db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || "college_complaints"
-
+    database: process.env.DB_NAME,
+    ssl: {
+        rejectUnauthorized: true
+    }
 });
-
 db.connect((err) => {
     if (err) {
         console.log("MySQL connection failed:", err.message);
