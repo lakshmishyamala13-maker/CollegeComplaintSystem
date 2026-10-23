@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+        }
+
+        .login-box {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px #0002;
+        }
+
+        h1 {
+            text-align: center;
+            color: #174a7e;
+        }
+
+        p {
+            text-align: center;
+            color: #64748b;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 7px;
+            border: 1px solid #ccd3dc;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 24px;
+            background: #174a7e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #message {
+            color: #b91c1c;
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>Admin Login</h1>
+        <p>College Complaint Management System</p>
+
+        <form id="loginForm">
+            <label for="username">Username</label>
+            <input
+                id="username"
+                name="username"
+                autocomplete="username"
+                required
+            >
+
+            <label for="password">Password</label>
+            <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button type="submit">Login</button>
+            <p id="message" role="alert"></p>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById("loginForm");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            message.textContent = "Checking login...";
+
+            const credentials = {
+                username: form.username.value,
+                password: form.password.value
+            };
+
+            try {
+                const response = await fetch("/admin/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(credentials)
+                });
+
+                const responseText = await response.text();
+console.log("Login response:", response.status, responseText);
+const result = JSON.parse(responseText);
+
+                if (!response.ok) {
+                    throw new Error(result.message || "Login failed.");
+                }
+
+                window.location.href = "/admin.html";
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>

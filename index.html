@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Complaint Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 30px 15px;
+        }
+        .container {
+            max-width: 550px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px #0001;
+        }
+        h1 {
+            text-align: center;
+            color: #174a7e;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px;
+            margin-top: 6px;
+            border: 1px solid #ccd3dc;
+            border-radius: 6px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #174a7e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        #message {
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>College Complaint Form</h1>
+
+        <form id="complaintForm">
+            <label for="student_name">Student Name</label>
+            <input id="student_name" name="student_name" required>
+
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required>
+
+            <label for="category">Complaint Category</label>
+            <select id="category" name="category" required>
+                <option value="">Select category</option>
+                <option>Classroom</option>
+                <option>Faculty</option>
+                <option>Library</option>
+                <option>Hostel</option>
+                <option>Infrastructure</option>
+                <option>Other</option>
+            </select>
+
+            <label for="subject">Subject</label>
+            <input id="subject" name="subject" required>
+
+            <label for="description">Complaint Description</label>
+            <textarea id="description" name="description"
+                      rows="5" required></textarea>
+
+            <button type="submit">Submit Complaint</button>
+            <p id="message" role="status"></p>
+        </form>
+    </div>
+
+    <script>
+       
+const form = document.getElementById("complaintForm");
+const message = document.getElementById("message");
+
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    message.textContent = "Submitting...";
+
+    try {
+        const response = await fetch("/submit-complaint", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Submission failed");
+        }
+
+        message.textContent =
+            result.message + " Complaint ID: " + result.complaintId;
+
+        form.reset();
+    } catch (error) {
+        console.error("Submission error:", error);
+        message.textContent = "Error: " + error.message;
+    }
+});
+
+    </script>
+</body>
+</html>

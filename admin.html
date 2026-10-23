@@ -1,0 +1,266 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - College Complaints</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f0f4f8;
+            color: #243247;
+        }
+
+        header {
+            background: #174a7e;
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 16px;
+        }
+
+        .summary {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 150px;
+            box-shadow: 0 3px 12px #0001;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #52657a;
+        }
+
+        .card p {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+
+        .table-box {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+
+        button, select {
+            padding: 9px;
+            border-radius: 5px;
+            border: 1px solid #ccd3dc;
+        }
+
+        button {
+            background: #174a7e;
+            color: white;
+            cursor: pointer;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 18px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e6ed;
+        }
+
+        th {
+            background: #edf3f8;
+        }
+
+        .message {
+            margin-top: 14px;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 16px;
+            }
+
+            th, td {
+                padding: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin Dashboard</h1>
+        <p>College Complaint Management System</p>
+    </header>
+
+    <main>
+        <div class="summary">
+            <div class="card">
+                <h3>Total Complaints</h3>
+                <p id="total">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Pending</h3>
+                <p id="pending">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Resolved</h3>
+                <p id="resolved">0</p>
+            </div>
+        </div>
+
+        <div class="table-box">
+            <h2>All Complaints</h2>
+            <button id="refreshButton" type="button">Refresh Complaints</button>
+            <p id="message" class="message" role="status"></p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Student</th>
+                        <th>Category</th>
+                        <th>Subject</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="complaintRows"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const rows = document.getElementById("complaintRows");
+        const message = document.getElementById("message");
+
+        async function loadComplaints() {
+            message.textContent = "Loading complaints...";
+            rows.replaceChildren();
+
+            try {
+                const response = await fetch("/admin/complaints");
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Could not load complaints.");
+                }
+
+                document.getElementById("total").textContent = data.length;
+                document.getElementById("pending").textContent =
+                    data.filter(c => c.status === "Pending").length;
+                document.getElementById("resolved").textContent =
+                    data.filter(c => c.status === "Resolved").length;
+
+                if (data.length === 0) {
+                    message.textContent = "No complaints have been submitted yet.";
+                    return;
+                }
+
+                for (const complaint of data) {
+                    const row = document.createElement("tr");
+
+                    const values = [
+                        complaint.id,
+                        complaint.student_name,
+                        complaint.category,
+                        complaint.subject,
+                        complaint.description
+                    ];
+
+                    for (const value of values) {
+                        const cell = document.createElement("td");
+                        cell.textContent = value;
+                        row.appendChild(cell);
+                    }
+
+                    const statusCell = document.createElement("td");
+                    const select = document.createElement("select");
+
+                    for (const status of ["Pending", "In Progress", "Resolved"]) {
+                        const option = document.createElement("option");
+                        option.value = status;
+                        option.textContent = status;
+                        option.selected = status === complaint.status;
+                        select.appendChild(option);
+                    }
+
+                    statusCell.appendChild(select);
+                    row.appendChild(statusCell);
+
+                    const actionCell = document.createElement("td");
+                    const saveButton = document.createElement("button");
+                    saveButton.textContent = "Save";
+
+                    saveButton.addEventListener("click", async () => {
+                        saveButton.disabled = true;
+                        message.textContent = "Updating complaint...";
+
+                        try {
+                            const updateResponse = await fetch(
+                                `/admin/complaints/${complaint.id}/status`,
+                                {
+                                    method: "PATCH",
+                                    headers: {
+                                        "Content-Type": "application/json"
+                                    },
+                                    body: JSON.stringify({ status: select.value })
+                                }
+                            );
+
+                            const result = await updateResponse.json();
+
+                            if (!updateResponse.ok) {
+                                throw new Error(result.message || "Update failed.");
+                            }
+
+                            message.textContent = "Complaint status updated.";
+                            await loadComplaints();
+                        } catch (error) {
+                            message.textContent = error.message;
+                        } finally {
+                            saveButton.disabled = false;
+                        }
+                    });
+
+                    actionCell.appendChild(saveButton);
+                    row.appendChild(actionCell);
+                    rows.appendChild(row);
+                }
+
+                message.textContent = "Complaints loaded successfully.";
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        }
+
+        document.getElementById("refreshButton")
+            .addEventListener("click", loadComplaints);
+
+        loadComplaints();
+    </script>
+</body>
+</html>

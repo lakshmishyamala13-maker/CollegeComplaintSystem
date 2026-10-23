@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Complaint Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 40px 15px;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px #0001;
+        }
+
+        h1 {
+            text-align: center;
+            color: #174a7e;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #ccd3dc;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #174a7e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-wrap: anywhere;
+        }
+
+        .status {
+            font-weight: bold;
+            color: #174a7e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Check Complaint Status</h1>
+
+        <form id="statusForm">
+            <label for="complaintId">Complaint ID</label>
+            <input
+                type="number"
+                id="complaintId"
+                min="1"
+                required
+                placeholder="Enter your Complaint ID"
+            >
+
+            <button type="submit">Check Status</button>
+        </form>
+
+        <div id="result" role="status"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById("statusForm");
+        const result = document.getElementById("result");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const id = document.getElementById("complaintId").value;
+            result.textContent = "Checking status...";
+
+            try {
+                const response = await fetch(
+                    `/complaint-status/${encodeURIComponent(id)}`
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Could not find complaint.");
+                }
+
+                result.replaceChildren();
+
+                const heading = document.createElement("h3");
+                heading.textContent = "Complaint Found";
+                result.appendChild(heading);
+
+                const subject = document.createElement("p");
+                subject.textContent = "Subject: " + data.subject;
+                result.appendChild(subject);
+
+                const status = document.createElement("p");
+                status.className = "status";
+                status.textContent = "Status: " + data.status;
+                result.appendChild(status);
+
+                const date = document.createElement("p");
+                date.textContent = "Submitted: " + new Date(
+                    data.created_at
+                ).toLocaleString();
+                result.appendChild(date);
+
+            } catch (error) {
+                result.textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>
